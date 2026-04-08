@@ -35,4 +35,4 @@ RUN mkdir -p /app/logs /app/downloads /app/output
 EXPOSE 80
 
 # Запускаем основного бота
-CMD ["python", "fumy.py"]
+CMD ["python", "main.py"]
