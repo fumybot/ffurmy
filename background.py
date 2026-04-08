@@ -33,9 +33,8 @@ def health():
     return {"status": "healthy", "uptime": "ok", "latency": random.uniform(0.1, 0.5)}
 
 def run():
-    # На Render нужно брать порт из переменных окружения
-    port = int(os.environ.get('PORT', 8080))
-    # Отключаем вывод логов Flask, чтобы они не светились в консоли Render
+    # На Hugging Face порт по умолчанию 7860
+    port = int(os.environ.get('PORT', 7860))
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
