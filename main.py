@@ -137,10 +137,21 @@ user_names_map = {
 
 
 # Инициализация Firebase
-cred = credentials.Certificate('/etc/secrets/firebase-key.json')  # Путь к вашему JSON файлу
+import json
+
+# Получаем ключ из переменной окружения
+firebase_secret = os.environ.get('FIREBASE_JSON')
+
+if firebase_secret:
+    # Загружаем из защищенного секрета Hugging Face
+    cred_dict = json.loads(firebase_secret)
+    cred = credentials.Certificate(cred_dict)
+else:
+    # Запасной вариант (если тестируете локально)
+    cred = credentials.Certificate('firebase-key.json')
 
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://fumy-1e1ec-default-rtdb.europe-west1.firebasedatabase.app/'  # Замените на URL вашей базы данных
+    'databaseURL': 'https://fumy-1e1ec-default-rtdb.europe-west1.firebasedatabase.app/'
 })
 
 
