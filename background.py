@@ -6,7 +6,7 @@ import requests
 app = Flask('')
 @app.route('/')
 def home():
-  return "I'm alive"
+  return "Hello world"
 def run():
   app.run(host='0.0.0.0', port=80)
 def keep_alive():
