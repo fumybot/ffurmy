@@ -148,7 +148,7 @@ if firebase_secret:
     cred = credentials.Certificate(cred_dict)
 else:
     # Запасной вариант (если тестируете локально)
-    cred = credentials.Certificate('firebase-key.json')
+    cred = credentials.Certificate('firebase_key_json')
 
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://fumy-1e1ec-default-rtdb.europe-west1.firebasedatabase.app/'
