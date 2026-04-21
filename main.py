@@ -140,7 +140,7 @@ user_names_map = {
 import json
 
 # Получаем ключ из переменной окружения
-firebase_secret = os.environ.get('FIREBASE_JSON')
+firebase_secret = os.environ.get('firebase_key_json')
 
 if firebase_secret:
     # Загружаем из защищенного секрета Hugging Face
