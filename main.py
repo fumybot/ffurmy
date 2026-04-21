@@ -20,7 +20,7 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import uuid4
 from background import keep_alive
-# Сторонние библиотеки
+# Сторонние библиотек
 import aiohttp
 import firebase_admin
 import google.generativeai as genai
