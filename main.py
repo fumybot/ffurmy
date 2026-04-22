@@ -11103,19 +11103,42 @@ async def ytxt_command(update, context):
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.error("Exception while handling an update:", exc_info=context.error)
 
-# Обновляем основную функцию main
-def main():
-    # Токен бота (убедитесь, что он у вас берется из os.environ или задан выше)
-    # TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 
-    # 1. Задаем увеличенные таймауты (30 секунд), чтобы избежать ConnectTimeout при старте
+
+import asyncio
+from aiohttp import web
+from telegram import Update
+
+# Твой FAKE_HTML из старого файла
+FAKE_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Data Processing API</title>
+    <style>body { font-family: Arial; padding: 50px; }</style>
+</head>
+<body>
+    <h1>Data Processing API Server</h1>
+    <p>Status: Online</p>
+    <p>Version: 1.4.2</p>
+    <p>Endpoints are protected.</p>
+</body>
+</html>
+"""
+
+
+
+
+
+
+# Обновляем основную функцию main
+async def main():
+    # 1. Создаем приложение бота
     application = (
         Application.builder()
         .token(TELEGRAM_BOT_TOKEN)
         .connect_timeout(30.0)
         .read_timeout(30.0)
-        .write_timeout(30.0)
-        .pool_timeout(30.0)
         .build()
     )
     application.add_handler(InlineQueryHandler(inline_query_handler))
@@ -11199,35 +11222,54 @@ def main():
     application.add_error_handler(error_handler)
     logger.info("Хендлеры успешно зарегистрированы.")
 
-    # === НАСТРОЙКА WEBHOOK ===
-    HF_USERNAME = "sylar113" 
-    HF_SPACE_NAME = "fumy"
+    # === НАСТРОЙКА WEBHOOK И СЕРВЕРА ===
     PORT = int(os.environ.get('PORT', 10000))
-    
-    # Render автоматически задает эту переменную для Web Services. 
-    # Если переменной нет (например, локальный запуск), подставится ваш адрес на Render руками.
     BASE_URL = os.environ.get('RENDER_EXTERNAL_URL', 'https://ffurmy-jcjj.onrender.com')
 
-    logger.info(f"Бот запускается в режиме WEBHOOK на порту {PORT} по адресу {BASE_URL}...")
-    
-    # Запускаем webhook
-    application.run_webhook(
-        listen="0.0.0.0",
-        port=PORT,
-        url_path=TELEGRAM_BOT_TOKEN, 
-        webhook_url=f"{BASE_URL}/{TELEGRAM_BOT_TOKEN}",
-        secret_token="123321", 
-        drop_pending_updates=True 
+    # Создаем асинхронное веб-приложение aiohttp
+    web_app = web.Application()
+
+    # Эндпоинт для Telegram (сюда будут приходить апдейты)
+    async def telegram_webhook(request: web.Request):
+        await application.update_queue.put(
+            Update.de_json(data=await request.json(), bot=application.bot)
+        )
+        return web.Response()
+
+    # Эндпоинт для фейковой страницы (твоя "визитка" для пинга)
+    async def health_check(request: web.Request):
+        return web.Response(text=FAKE_HTML, content_type="text/html")
+
+    # Регистрируем пути
+    web_app.router.add_post(f"/{TELEGRAM_BOT_TOKEN}", telegram_webhook)
+    web_app.router.add_get("/", health_check)
+    web_app.router.add_get("/health", health_check)
+
+    # Запускаем внутренности бота
+    await application.initialize()
+    await application.start()
+
+    # Настраиваем и запускаем aiohttp сервер
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", PORT)
+    await site.start()
+
+    logger.info(f"Сервер запущен на порту {PORT}. HTML доступен по адресу {BASE_URL}/")
+
+    # Говорим Телеграму, куда слать сообщения
+    await application.bot.set_webhook(
+        url=f"{BASE_URL}/{TELEGRAM_BOT_TOKEN}",
+        secret_token="123321",
+        drop_pending_updates=True
     )
 
+    # Держим процесс запущенным бесконечно
+    await asyncio.Event().wait()
+
 if __name__ == "__main__":
-    # Вы абсолютно правы: Flask (keep_alive) нужно закомментировать/удалить, 
-    # так как python-telegram-bot сам поднимает сервер на порту 7860 (через Tornado).
-    # Два сервера на одном порту вызовут ошибку "Address already in use".
-    main()
-
-
-
+    # Запускаем асинхронный main
+    asyncio.run(main())
 
 
 
