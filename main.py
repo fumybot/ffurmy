@@ -11103,7 +11103,19 @@ async def ytxt_command(update, context):
 
 # Обновляем основную функцию main
 def main():
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    # Токен бота (убедитесь, что он у вас берется из os.environ или задан выше)
+    # TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+
+    # 1. Задаем увеличенные таймауты (30 секунд), чтобы избежать ConnectTimeout при старте
+    application = (
+        Application.builder()
+        .token(TELEGRAM_BOT_TOKEN)
+        .connect_timeout(30.0)
+        .read_timeout(30.0)
+        .write_timeout(30.0)
+        .pool_timeout(30.0)
+        .build()
+    )
     application.add_handler(InlineQueryHandler(inline_query_handler))
     application.add_handler(CallbackQueryHandler(more_keys, pattern=r"^more_keys_\d+$"))  
     application.add_handler(CallbackQueryHandler(download_file, pattern="^download_file$"))
@@ -11181,33 +11193,38 @@ def main():
     # Обработка всех типов стикеров и GIF-анимаций внутри handle_sticker
     application.add_handler(MessageHandler(filters.Sticker.ALL | filters.ANIMATION, handle_sticker))
 
-    logger.info("Бот запущен и ожидает сообщений.")
-    keep_alive()
-  
-    logger.info("Бот запущен и ожидает сообщений.")
 
-    keep_alive()
+    application.add_error_handler(error_handler)
+    logger.info("Хендлеры успешно зарегистрированы.")
+
+    # === НАСТРОЙКА WEBHOOK ===
     HF_USERNAME = "sylar113" 
     HF_SPACE_NAME = "fumy"
-    WEBHOOK_URL = f"https://{HF_USERNAME}-{HF_SPACE_NAME}.hf.space"
-
     PORT = int(os.environ.get('PORT', 7860))
-
-    logger.info("Бот запущен в режиме WEBHOOK и ожидает сообщений.")
     
-    # Запускаем webhook вместо polling. 
-    # Flask (keep_alive) в этом случае можно отключить, так как этот сервер сам займет порт 7860
-    # и Hugging Face будет видеть, что приложение работает.
+    # Базовый URL вашего пространства на Hugging Face
+    BASE_URL = f"https://{HF_USERNAME}-{HF_SPACE_NAME}.hf.space"
+
+    logger.info(f"Бот запускается в режиме WEBHOOK на порту {PORT}...")
+    
+    # Запускаем webhook
     application.run_webhook(
         listen="0.0.0.0",
         port=PORT,
-        secret_token="123321",
-        webhook_url=WEBHOOK_URL
+        # Используем токен в качестве пути для безопасности (https://ваш-домен.com/ТОКЕН)
+        url_path=TELEGRAM_BOT_TOKEN, 
+        webhook_url=f"{BASE_URL}/{TELEGRAM_BOT_TOKEN}",
+        secret_token="123321", # Секретный токен для проверки, что запрос от Telegram
+        drop_pending_updates=True # ОБЯЗАТЕЛЬНО: сбрасывает старые апдейты от long polling
     )
 
 if __name__ == "__main__":
-    # keep_alive() # <- Если используете webhook из кода выше, Flask сервер лучше закомментировать
+    # Вы абсолютно правы: Flask (keep_alive) нужно закомментировать/удалить, 
+    # так как python-telegram-bot сам поднимает сервер на порту 7860 (через Tornado).
+    # Два сервера на одном порту вызовут ошибку "Address already in use".
     main()
+
+
 
 
 
