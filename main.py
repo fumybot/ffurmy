@@ -11202,22 +11202,22 @@ def main():
     # === НАСТРОЙКА WEBHOOK ===
     HF_USERNAME = "sylar113" 
     HF_SPACE_NAME = "fumy"
-    PORT = int(os.environ.get('PORT', 7860))
+    PORT = int(os.environ.get('PORT', 10000))
     
-    # Базовый URL вашего пространства на Hugging Face
-    BASE_URL = f"https://{HF_USERNAME}-{HF_SPACE_NAME}.hf.space"
+    # Render автоматически задает эту переменную для Web Services. 
+    # Если переменной нет (например, локальный запуск), подставится ваш адрес на Render руками.
+    BASE_URL = os.environ.get('RENDER_EXTERNAL_URL', 'https://ffurmy-jcjj.onrender.com')
 
-    logger.info(f"Бот запускается в режиме WEBHOOK на порту {PORT}...")
+    logger.info(f"Бот запускается в режиме WEBHOOK на порту {PORT} по адресу {BASE_URL}...")
     
     # Запускаем webhook
     application.run_webhook(
         listen="0.0.0.0",
         port=PORT,
-        # Используем токен в качестве пути для безопасности (https://ваш-домен.com/ТОКЕН)
         url_path=TELEGRAM_BOT_TOKEN, 
         webhook_url=f"{BASE_URL}/{TELEGRAM_BOT_TOKEN}",
-        secret_token="123321", # Секретный токен для проверки, что запрос от Telegram
-        drop_pending_updates=True # ОБЯЗАТЕЛЬНО: сбрасывает старые апдейты от long polling
+        secret_token="123321", 
+        drop_pending_updates=True 
     )
 
 if __name__ == "__main__":
