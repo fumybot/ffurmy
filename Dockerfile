@@ -33,4 +33,4 @@ RUN mkdir -p logs downloads output
 # Открываем порт Hugging Face
 EXPOSE 7860
 
-CMD ["python", "fumy.py"]
+CMD ["python", "main.py"]
