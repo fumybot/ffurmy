@@ -11100,6 +11100,8 @@ async def ytxt_command(update, context):
 
     except Exception as e:
         await status_message.edit_text(f"❌ Произошла ошибка.\n\nДетали: {str(e)}")
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.error("Exception while handling an update:", exc_info=context.error)
 
 # Обновляем основную функцию main
 def main():
