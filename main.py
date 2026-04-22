@@ -11184,10 +11184,32 @@ def main():
     logger.info("Бот запущен и ожидает сообщений.")
     keep_alive()
   
-    application.run_polling()
+    logger.info("Бот запущен и ожидает сообщений.")
+
+    keep_alive()
+    HF_USERNAME = "sylar113" 
+    HF_SPACE_NAME = "fumy"
+    WEBHOOK_URL = f"https://{HF_USERNAME}-{HF_SPACE_NAME}.hf.space"
+
+    PORT = int(os.environ.get('PORT', 7860))
+
+    logger.info("Бот запущен в режиме WEBHOOK и ожидает сообщений.")
+    
+    # Запускаем webhook вместо polling. 
+    # Flask (keep_alive) в этом случае можно отключить, так как этот сервер сам займет порт 7860
+    # и Hugging Face будет видеть, что приложение работает.
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=PORT,
+        secret_token="123321",
+        webhook_url=WEBHOOK_URL
+    )
 
 if __name__ == "__main__":
+    # keep_alive() # <- Если используете webhook из кода выше, Flask сервер лучше закомментировать
     main()
+
+
 
 
 
